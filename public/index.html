@@ -25,20 +25,25 @@ a{color:#38bdf8}
 .status-text{font-size:.75rem;color:#94a3b8}
 .container{max-width:1440px;margin:0 auto;padding:1.5rem}
 
+.section-title{font-size:1.05rem;font-weight:700;color:#f1f5f9;margin:2rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid #334155}
+.section-title span{color:#38bdf8}
+
 /* KPI Cards */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
-.kpi-card{background:linear-gradient(135deg,#1e293b,#162032);border:1px solid #334155;border-radius:.75rem;padding:1.25rem;position:relative;overflow:hidden;transition:transform .15s,border-color .15s}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem}
+.kpi-card{background:linear-gradient(135deg,#1e293b,#162032);border:1px solid #334155;border-radius:.75rem;padding:1.1rem;position:relative;overflow:hidden;transition:transform .15s,border-color .15s}
 .kpi-card:hover{transform:translateY(-2px);border-color:#475569}
-.kpi-card .icon{position:absolute;top:.75rem;right:.75rem;font-size:1.5rem;opacity:.25}
-.kpi-card .label{font-size:.78rem;color:#94a3b8;margin-bottom:.35rem;font-weight:500}
-.kpi-card .value{font-size:1.65rem;font-weight:700;color:#f1f5f9;letter-spacing:-0.02em}
-.kpi-card .sub{font-size:.72rem;color:#64748b;margin-top:.3rem}
+.kpi-card .icon{position:absolute;top:.65rem;right:.65rem;font-size:1.3rem;opacity:.25}
+.kpi-card .label{font-size:.73rem;color:#94a3b8;margin-bottom:.3rem;font-weight:500}
+.kpi-card .value{font-size:1.5rem;font-weight:700;color:#f1f5f9;letter-spacing:-0.02em}
+.kpi-card .sub{font-size:.68rem;color:#64748b;margin-top:.25rem}
 .kpi-card.blue .value{color:#38bdf8}
 .kpi-card.green .value{color:#4ade80}
 .kpi-card.amber .value{color:#fbbf24}
 .kpi-card.purple .value{color:#a78bfa}
 .kpi-card.pink .value{color:#fb7185}
 .kpi-card.cyan .value{color:#22d3ee}
+.kpi-card.red .value{color:#f87171}
+.kpi-card.lime .value{color:#a3e635}
 
 /* Chart grid */
 .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
@@ -57,6 +62,7 @@ tbody tr{border-bottom:1px solid #1e293b;transition:background .1s}
 tbody tr:hover{background:#162032}
 tbody td{padding:.55rem .75rem;white-space:nowrap}
 tbody td:first-child{color:#e2e8f0;font-weight:500}
+.cell-bar{display:inline-block;height:6px;border-radius:3px;margin-left:6px;vertical-align:middle}
 .loading-overlay{position:fixed;inset:0;background:rgba(15,23,42,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;transition:opacity .3s}
 .loading-overlay.hidden{opacity:0;pointer-events:none}
 .spinner{width:48px;height:48px;border:4px solid #334155;border-top-color:#38bdf8;border-radius:50%;animation:spin .8s linear infinite}
@@ -69,6 +75,7 @@ tbody td:first-child{color:#e2e8f0;font-weight:500}
     .chart-box.full{grid-column:1}
     .header{padding:1rem}
     .container{padding:1rem}
+    .kpi-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 }
 </style>
 </head>
@@ -100,32 +107,67 @@ tbody td:first-child{color:#e2e8f0;font-weight:500}
 <div class="container">
     <div class="error-banner" id="errorBanner"></div>
 
-    <!-- KPI Cards -->
+    <!-- ===== KPI Cards ===== -->
     <div class="kpi-grid">
         <div class="kpi-card blue"><div class="icon">📋</div><div class="label">총 문의 수</div><div class="value" id="kpiInq">-</div><div class="sub" id="kpiInqSub"></div></div>
         <div class="kpi-card green"><div class="icon">✅</div><div class="label">전환 수</div><div class="value" id="kpiConv">-</div><div class="sub" id="kpiConvSub"></div></div>
         <div class="kpi-card amber"><div class="icon">📊</div><div class="label">전환율</div><div class="value" id="kpiRate">-</div><div class="sub" id="kpiRateSub"></div></div>
         <div class="kpi-card pink"><div class="icon">💰</div><div class="label">총 전환가치</div><div class="value" id="kpiValue">-</div><div class="sub" id="kpiValueSub"></div></div>
+        <div class="kpi-card purple"><div class="icon">💎</div><div class="label">건당 평균 매출</div><div class="value" id="kpiAvgDeal">-</div><div class="sub" id="kpiAvgDealSub"></div></div>
         <div class="kpi-card cyan"><div class="icon">📈</div><div class="label">일평균 문의</div><div class="value" id="kpiAvg">-</div><div class="sub" id="kpiAvgSub"></div></div>
+        <div class="kpi-card lime"><div class="icon">📞</div><div class="label">첫콜 성공률</div><div class="value" id="kpiFirstCall">-</div><div class="sub" id="kpiFirstCallSub"></div></div>
+        <div class="kpi-card red"><div class="icon">🚫</div><div class="label">미응답/부재</div><div class="value" id="kpiNoAnswer">-</div><div class="sub" id="kpiNoAnswerSub"></div></div>
     </div>
 
-    <!-- Charts -->
+    <!-- ===== SECTION: 기본 현황 ===== -->
+    <div class="section-title"><span>📈</span> 기본 현황</div>
     <div class="chart-grid">
         <div class="chart-box full"><h3>일별 문의 & 전환 추이</h3><canvas id="chartDaily"></canvas></div>
-        <div class="chart-box"><h3>상담사별 성과 (문의 / 전환)</h3><canvas id="chartConsPerf"></canvas></div>
-        <div class="chart-box"><h3>상담사별 전환율</h3><canvas id="chartConsRate"></canvas></div>
         <div class="chart-box"><h3>브랜드별 문의 & 전환</h3><canvas id="chartBrand"></canvas></div>
-        <div class="chart-box"><h3>유입경로별 분포</h3><canvas id="chartChannel"></canvas></div>
-        <div class="chart-box full"><h3>상담사별 전환가치</h3><canvas id="chartConsValue"></canvas></div>
+        <div class="chart-box"><h3>유입경로별 문의수</h3><canvas id="chartChannel"></canvas></div>
     </div>
 
-    <!-- Table -->
+    <!-- ===== SECTION: 상담사 성과 ===== -->
+    <div class="section-title"><span>👥</span> 상담사 성과 분석</div>
+    <div class="chart-grid">
+        <div class="chart-box"><h3>상담사별 문의 / 전환</h3><canvas id="chartConsPerf"></canvas></div>
+        <div class="chart-box"><h3>상담사별 전환율</h3><canvas id="chartConsRate"></canvas></div>
+        <div class="chart-box"><h3>상담사별 건당 평균 매출</h3><canvas id="chartConsAvgDeal"></canvas></div>
+        <div class="chart-box"><h3>상담사별 총 매출</h3><canvas id="chartConsValue"></canvas></div>
+    </div>
+
+    <!-- ===== SECTION: 채널 ROI ===== -->
+    <div class="section-title"><span>🎯</span> 채널별 ROI</div>
+    <div class="chart-grid">
+        <div class="chart-box full"><h3>채널별 전환율 & 건당 매출</h3><canvas id="chartChannelROI"></canvas></div>
+    </div>
+
+    <!-- ===== SECTION: 첫콜 & 응답속도 ===== -->
+    <div class="section-title"><span>📞</span> 첫콜 & 응답속도 분석</div>
+    <div class="chart-grid">
+        <div class="chart-box"><h3>첫콜 상태별 전환율</h3><canvas id="chartFirstCall"></canvas></div>
+        <div class="chart-box"><h3>응답속도별 전환율</h3><canvas id="chartResponseSpeed"></canvas></div>
+        <div class="chart-box full"><h3>미전환 리콜 현황 (부재중 단계별)</h3><canvas id="chartRecallStatus"></canvas></div>
+    </div>
+
+    <!-- ===== Table ===== -->
     <div class="table-section">
         <h3>일별 상세 데이터</h3>
         <div class="table-wrap">
             <table>
-                <thead><tr><th>날짜</th><th>문의수</th><th>전환수</th><th>전환율</th><th>전환가치</th></tr></thead>
+                <thead><tr><th>날짜</th><th>문의수</th><th>전환수</th><th>전환율</th><th>전환가치</th><th>첫콜성공</th><th>당일응답</th></tr></thead>
                 <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== Consultant Detail Table ===== -->
+    <div class="table-section">
+        <h3>상담사별 상세 성과</h3>
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>상담사</th><th>문의</th><th>전환</th><th>전환율</th><th>총 매출</th><th>건당 매출</th><th>첫콜성공률</th><th>당일응답률</th></tr></thead>
+                <tbody id="consTableBody"></tbody>
             </table>
         </div>
     </div>
@@ -136,9 +178,8 @@ tbody td:first-child{color:#e2e8f0;font-weight:500}
 const GID = '2096386829';
 const ACTIVE_CONSULTANTS = ['판승빈', '최해인', '강혜윤'];
 const COLORS = {
-    inq: '#38bdf8',
-    conv: '#4ade80',
-    channels: ['#38bdf8', '#4ade80', '#a78bfa', '#fbbf24', '#fb7185', '#22d3ee', '#f472b6', '#34d399']
+    inq: '#38bdf8', conv: '#4ade80', value: '#fbbf24', rate: '#a78bfa',
+    channels: ['#38bdf8','#4ade80','#a78bfa','#fbbf24','#fb7185','#22d3ee','#f472b6','#34d399','#e879f9','#f97316']
 };
 
 let allRows = [];
@@ -152,12 +193,12 @@ function parseWon(v) {
     return parseInt(s, 10) || 0;
 }
 function fmtWon(n) {
-    if (n === 0) return '₩ 0';
-    return '₩ ' + n.toLocaleString('ko-KR');
+    if (n === 0) return '₩0';
+    if (n >= 100000000) return '₩' + (n/100000000).toFixed(1) + '억';
+    if (n >= 10000) return '₩' + (n/10000).toFixed(0) + '만';
+    return '₩' + n.toLocaleString('ko-KR');
 }
-function fmtNum(n) {
-    return n.toLocaleString('ko-KR');
-}
+function fmtNum(n) { return n.toLocaleString('ko-KR'); }
 function fmtDate(d) {
     const mm = String(d.getMonth()+1).padStart(2,'0');
     const dd = String(d.getDate()).padStart(2,'0');
@@ -166,8 +207,7 @@ function fmtDate(d) {
 }
 
 /* ─── Date Parser with year rollover ─── */
-let _parseYear = 2025;
-let _prevMonth = 0;
+let _parseYear, _prevMonth;
 function resetDateParser() { _parseYear = 2025; _prevMonth = 0; }
 function parseDate(dateStr) {
     if (!dateStr) return null;
@@ -180,6 +220,22 @@ function parseDate(dateStr) {
     _prevMonth = month;
     return new Date(_parseYear, month - 1, day);
 }
+// Standalone date parse (doesn't affect global state) for response date
+function parseDateStandalone(dateStr, refDate) {
+    if (!dateStr) return null;
+    const m = String(dateStr).match(/(\d{1,2})\.(\d{1,2})/);
+    if (!m) return null;
+    const month = parseInt(m[1], 10);
+    const day = parseInt(m[2], 10);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    // Use same year as refDate, or refDate's year+1 if month rollover
+    if (refDate) {
+        let yr = refDate.getFullYear();
+        if (refDate.getMonth() >= 10 && month <= 2) yr++;
+        return new Date(yr, month - 1, day);
+    }
+    return new Date(2025, month - 1, day);
+}
 
 /* ─── Status ─── */
 function setStatus(type, text) {
@@ -188,12 +244,9 @@ function setStatus(type, text) {
 }
 function showError(msg) {
     const el = document.getElementById('errorBanner');
-    el.textContent = msg;
-    el.style.display = 'block';
+    el.textContent = msg; el.style.display = 'block';
 }
-function hideError() {
-    document.getElementById('errorBanner').style.display = 'none';
-}
+function hideError() { document.getElementById('errorBanner').style.display = 'none'; }
 
 /* ─── Fetch & Parse ─── */
 async function fetchData() {
@@ -205,31 +258,29 @@ async function fetchData() {
         const parsed = Papa.parse(csvText, { skipEmptyLines: false });
         const rows = parsed.data;
 
-        // Find header row
         let headerIdx = -1;
         for (let i = 0; i < Math.min(rows.length, 10); i++) {
             const rowStr = rows[i].join(',');
-            if (rowStr.includes('브랜드') || rowStr.includes('학생')) {
-                headerIdx = i;
-                break;
-            }
+            if (rowStr.includes('브랜드') || rowStr.includes('학생')) { headerIdx = i; break; }
         }
         if (headerIdx === -1) headerIdx = 0;
 
-        const dataStartIdx = headerIdx + 1;
         resetDateParser();
         const rawEntries = [];
 
-        for (let i = dataStartIdx; i < rows.length; i++) {
+        for (let i = headerIdx + 1; i < rows.length; i++) {
             const row = rows[i];
             if (!row || row.length < 10) continue;
 
             const id = (row[0] || '').trim();
             const brand = (row[1] || '').trim();
+            const product = (row[2] || '').trim();
             const dateStr = (row[3] || '').trim();
             const channel = (row[5] || '').trim();
             const studentName = (row[8] || '').trim();
+            const responseDateStr = (row[13] || '').trim();
             const consultant = (row[16] || '').trim();
+            const firstCallStatus = (row[17] || '').trim();
             const payment = (row[19] || '').trim();
             const convValueStr = (row[21] || '').trim();
 
@@ -238,25 +289,46 @@ async function fetchData() {
             const dt = parseDate(dateStr);
             const isConverted = payment.toUpperCase() === 'O';
             const convValue = parseWon(convValueStr);
+            const firstCallOK = firstCallStatus === 'O';
 
-            rawEntries.push({ id, brand, dateStr, dt, channel, studentName, consultant, isConverted, convValue });
+            // Classify firstCall status
+            let firstCallCategory = '기타';
+            if (firstCallStatus === 'O') firstCallCategory = '첫콜 성공';
+            else if (firstCallStatus.includes('1차')) firstCallCategory = '1차 부재';
+            else if (firstCallStatus.includes('2차')) firstCallCategory = '2차 부재';
+            else if (firstCallStatus.includes('3차')) firstCallCategory = '3차 부재';
+            else if (firstCallStatus.includes('부재') || firstCallStatus.includes('취소')) firstCallCategory = '기타 부재';
+            else if (!firstCallStatus) firstCallCategory = '미시도';
+
+            rawEntries.push({
+                id, brand, product, dateStr, dt, channel, studentName,
+                responseDateStr, consultant, firstCallStatus, firstCallOK,
+                firstCallCategory, isConverted, convValue
+            });
         }
 
-        // Fill missing dates from surrounding rows
+        // Fill missing dates
         for (let i = 0; i < rawEntries.length; i++) {
             if (rawEntries[i].dt) continue;
-            let prevDate = null;
-            for (let j = i - 1; j >= 0; j--) {
-                if (rawEntries[j].dt) { prevDate = rawEntries[j].dt; break; }
-            }
-            let nextDate = null;
-            for (let j = i + 1; j < rawEntries.length; j++) {
-                if (rawEntries[j].dt) { nextDate = rawEntries[j].dt; break; }
-            }
-            rawEntries[i].dt = prevDate || nextDate;
+            let prev = null, next = null;
+            for (let j = i - 1; j >= 0; j--) { if (rawEntries[j].dt) { prev = rawEntries[j].dt; break; } }
+            for (let j = i + 1; j < rawEntries.length; j++) { if (rawEntries[j].dt) { next = rawEntries[j].dt; break; } }
+            rawEntries[i].dt = prev || next;
         }
 
         allRows = rawEntries.filter(e => e.dt !== null);
+
+        // Calculate response days
+        allRows.forEach(r => {
+            r.responseDays = null;
+            if (r.dt && r.responseDateStr) {
+                const respDate = parseDateStandalone(r.responseDateStr, r.dt);
+                if (respDate) {
+                    const diff = Math.round((respDate - r.dt) / 86400000);
+                    if (diff >= 0 && diff < 365) r.responseDays = diff;
+                }
+            }
+        });
 
         setStatus('ok', `${allRows.length}건 로드 완료`);
         hideError();
@@ -283,6 +355,7 @@ function render() {
     renderKPIs(rows);
     renderCharts(rows);
     renderTable(rows);
+    renderConsTable(rows);
     document.getElementById('loadingOverlay').classList.add('hidden');
 }
 
@@ -292,9 +365,14 @@ function renderKPIs(rows) {
     const converted = rows.filter(r => r.isConverted).length;
     const rate = total > 0 ? (converted / total * 100) : 0;
     const totalValue = rows.reduce((s, r) => s + r.convValue, 0);
+    const avgDeal = converted > 0 ? Math.round(totalValue / converted) : 0;
     const dateSet = new Set(rows.map(r => r.dt.toDateString()));
     const numDays = dateSet.size || 1;
     const avgInq = total / numDays;
+    const firstCallOK = rows.filter(r => r.firstCallOK).length;
+    const firstCallRate = total > 0 ? (firstCallOK / total * 100) : 0;
+    const noAnswer = rows.filter(r => !r.firstCallOK).length;
+    const noAnswerConv = rows.filter(r => !r.firstCallOK && r.isConverted).length;
 
     document.getElementById('kpiInq').textContent = fmtNum(total);
     document.getElementById('kpiInqSub').textContent = `${numDays}일간 총 문의`;
@@ -304,20 +382,22 @@ function renderKPIs(rows) {
     document.getElementById('kpiRateSub').textContent = `문의 대비 전환`;
     document.getElementById('kpiValue').textContent = fmtWon(totalValue);
     document.getElementById('kpiValueSub').textContent = `전환 총 가치`;
+    document.getElementById('kpiAvgDeal').textContent = fmtWon(avgDeal);
+    document.getElementById('kpiAvgDealSub').textContent = `전환 건당 평균`;
     document.getElementById('kpiAvg').textContent = avgInq.toFixed(1);
     document.getElementById('kpiAvgSub').textContent = `일 평균 문의`;
+    document.getElementById('kpiFirstCall').textContent = firstCallRate.toFixed(1) + '%';
+    document.getElementById('kpiFirstCallSub').textContent = `${fmtNum(firstCallOK)} / ${fmtNum(total)}건 성공`;
+    document.getElementById('kpiNoAnswer').textContent = fmtNum(noAnswer);
+    document.getElementById('kpiNoAnswerSub').textContent = `이 중 전환 ${noAnswerConv}건 (${noAnswer > 0 ? (noAnswerConv/noAnswer*100).toFixed(1) : 0}%)`;
 }
 
 /* ─── Chart Helpers ─── */
 const chartDefaults = {
-    responsive: true,
-    maintainAspectRatio: false,
+    responsive: true, maintainAspectRatio: false,
     plugins: {
         legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
-        tooltip: {
-            backgroundColor: '#1e293b', titleColor: '#f1f5f9', bodyColor: '#e2e8f0',
-            borderColor: '#334155', borderWidth: 1, padding: 10, cornerRadius: 8
-        }
+        tooltip: { backgroundColor: '#1e293b', titleColor: '#f1f5f9', bodyColor: '#e2e8f0', borderColor: '#334155', borderWidth: 1, padding: 10, cornerRadius: 8 }
     },
     scales: {
         x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e293b' } },
@@ -330,17 +410,25 @@ function cloneDefaults() { return JSON.parse(JSON.stringify(chartDefaults)); }
 
 /* ─── Render Charts ─── */
 function renderCharts(rows) {
-    // Aggregate by date
+    renderBasicCharts(rows);
+    renderConsultantCharts(rows);
+    renderChannelROI(rows);
+    renderFirstCallCharts(rows);
+}
+
+function renderBasicCharts(rows) {
+    // ── Daily inquiry & conversion ──
     const dailyMap = {};
     rows.forEach(r => {
         const key = fmtDate(r.dt);
-        if (!dailyMap[key]) dailyMap[key] = { date: r.dt, inq: 0, conv: 0, value: 0 };
+        if (!dailyMap[key]) dailyMap[key] = { date: r.dt, inq: 0, conv: 0, fc: 0, sameDay: 0 };
         dailyMap[key].inq++;
-        if (r.isConverted) { dailyMap[key].conv++; dailyMap[key].value += r.convValue; }
+        if (r.isConverted) dailyMap[key].conv++;
+        if (r.firstCallOK) dailyMap[key].fc++;
+        if (r.responseDays === 0) dailyMap[key].sameDay++;
     });
     const dailyKeys = Object.keys(dailyMap).sort((a, b) => dailyMap[a].date - dailyMap[b].date);
 
-    // 1) Daily inquiry & conversion
     destroyChart('daily');
     charts.daily = new Chart(makeCtx('chartDaily'), {
         type: 'bar',
@@ -361,64 +449,7 @@ function renderCharts(rows) {
         }
     });
 
-    // Aggregate by consultant
-    const consMap = {};
-    rows.forEach(r => {
-        const c = r.consultant || '(미배정)';
-        if (!consMap[c]) consMap[c] = { inq: 0, conv: 0, value: 0 };
-        consMap[c].inq++;
-        if (r.isConverted) { consMap[c].conv++; consMap[c].value += r.convValue; }
-    });
-    const consNames = [
-        ...ACTIVE_CONSULTANTS.filter(c => consMap[c]),
-        ...Object.keys(consMap).filter(c => !ACTIVE_CONSULTANTS.includes(c)).sort((a, b) => consMap[b].inq - consMap[a].inq)
-    ];
-    const consInq = consNames.map(c => consMap[c].inq);
-    const consConv = consNames.map(c => consMap[c].conv);
-    const consValue = consNames.map(c => consMap[c].value);
-    const consColors = consNames.map((_, i) => COLORS.channels[i % COLORS.channels.length] + 'cc');
-
-    // 2) Consultant performance
-    destroyChart('consPerf');
-    charts.consPerf = new Chart(makeCtx('chartConsPerf'), {
-        type: 'bar',
-        data: {
-            labels: consNames,
-            datasets: [
-                { label: '문의', data: consInq, backgroundColor: COLORS.inq + 'cc', borderRadius: 4 },
-                { label: '전환', data: consConv, backgroundColor: COLORS.conv + 'cc', borderRadius: 4 }
-            ]
-        },
-        options: {
-            ...cloneDefaults(), responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-            plugins: { ...chartDefaults.plugins },
-            scales: {
-                x: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: '#1e293b' } },
-                y: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { color: '#1e293b' } }
-            }
-        }
-    });
-
-    // 3) Consultant conversion rate
-    destroyChart('consRate');
-    const consRates = consNames.map((_, i) => consInq[i] > 0 ? +(consConv[i] / consInq[i] * 100).toFixed(1) : 0);
-    charts.consRate = new Chart(makeCtx('chartConsRate'), {
-        type: 'bar',
-        data: {
-            labels: consNames,
-            datasets: [{ label: '전환율 (%)', data: consRates, backgroundColor: consColors, borderRadius: 4 }]
-        },
-        options: {
-            ...cloneDefaults(), responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-            plugins: { ...chartDefaults.plugins, legend: { display: false } },
-            scales: {
-                x: { beginAtZero: true, ticks: { color: '#64748b', callback: v => v + '%' }, grid: { color: '#1e293b' } },
-                y: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { color: '#1e293b' } }
-            }
-        }
-    });
-
-    // Aggregate by brand
+    // ── Brand ──
     const brandMap = {};
     rows.forEach(r => {
         const b = r.brand || '(기타)';
@@ -428,7 +459,6 @@ function renderCharts(rows) {
     });
     const brandNames = Object.keys(brandMap).sort((a, b) => brandMap[b].inq - brandMap[a].inq);
 
-    // 4) Brand breakdown
     destroyChart('brand');
     charts.brand = new Chart(makeCtx('chartBrand'), {
         type: 'bar',
@@ -449,26 +479,19 @@ function renderCharts(rows) {
         }
     });
 
-    // Aggregate by channel
+    // ── Channel distribution ──
     const chanMap = {};
-    rows.forEach(r => {
-        const ch = r.channel || '(미분류)';
-        if (!chanMap[ch]) chanMap[ch] = 0;
-        chanMap[ch]++;
-    });
+    rows.forEach(r => { const ch = r.channel || '(미분류)'; chanMap[ch] = (chanMap[ch] || 0) + 1; });
     const chanNames = Object.keys(chanMap).sort((a, b) => chanMap[b] - chanMap[a]);
 
-    // 5) Channel distribution
     destroyChart('channel');
     charts.channel = new Chart(makeCtx('chartChannel'), {
         type: 'bar',
         data: {
             labels: chanNames,
             datasets: [{
-                label: '문의수',
-                data: chanNames.map(c => chanMap[c]),
-                backgroundColor: chanNames.map((_, i) => COLORS.channels[i % COLORS.channels.length] + 'cc'),
-                borderRadius: 4
+                label: '문의수', data: chanNames.map(c => chanMap[c]),
+                backgroundColor: chanNames.map((_, i) => COLORS.channels[i % COLORS.channels.length] + 'cc'), borderRadius: 4
             }]
         },
         options: {
@@ -480,44 +503,284 @@ function renderCharts(rows) {
             }
         }
     });
+}
 
-    // 6) Consultant conversion value
+function renderConsultantCharts(rows) {
+    const consMap = {};
+    rows.forEach(r => {
+        const c = r.consultant || '(미배정)';
+        if (!consMap[c]) consMap[c] = { inq: 0, conv: 0, value: 0, fc: 0, sameDay: 0 };
+        consMap[c].inq++;
+        if (r.isConverted) { consMap[c].conv++; consMap[c].value += r.convValue; }
+        if (r.firstCallOK) consMap[c].fc++;
+        if (r.responseDays === 0) consMap[c].sameDay++;
+    });
+    const consNames = [
+        ...ACTIVE_CONSULTANTS.filter(c => consMap[c]),
+        ...Object.keys(consMap).filter(c => !ACTIVE_CONSULTANTS.includes(c)).sort((a, b) => consMap[b].inq - consMap[a].inq)
+    ];
+    const consInq = consNames.map(c => consMap[c].inq);
+    const consConv = consNames.map(c => consMap[c].conv);
+    const consValue = consNames.map(c => consMap[c].value);
+    const consAvgDeal = consNames.map(c => consMap[c].conv > 0 ? Math.round(consMap[c].value / consMap[c].conv) : 0);
+    const consRates = consNames.map((_, i) => consInq[i] > 0 ? +(consConv[i] / consInq[i] * 100).toFixed(1) : 0);
+    const consColors = consNames.map((_, i) => COLORS.channels[i % COLORS.channels.length] + 'cc');
+
+    // Performance
+    destroyChart('consPerf');
+    charts.consPerf = new Chart(makeCtx('chartConsPerf'), {
+        type: 'bar',
+        data: { labels: consNames, datasets: [
+            { label: '문의', data: consInq, backgroundColor: COLORS.inq + 'cc', borderRadius: 4 },
+            { label: '전환', data: consConv, backgroundColor: COLORS.conv + 'cc', borderRadius: 4 }
+        ]},
+        options: { ...cloneDefaults(), responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+            plugins: { ...chartDefaults.plugins },
+            scales: { x: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: '#1e293b' } }, y: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { color: '#1e293b' } } }
+        }
+    });
+
+    // Conversion Rate
+    destroyChart('consRate');
+    charts.consRate = new Chart(makeCtx('chartConsRate'), {
+        type: 'bar',
+        data: { labels: consNames, datasets: [{ label: '전환율 (%)', data: consRates, backgroundColor: consColors, borderRadius: 4 }] },
+        options: { ...cloneDefaults(), responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+            plugins: { ...chartDefaults.plugins, legend: { display: false } },
+            scales: { x: { beginAtZero: true, ticks: { color: '#64748b', callback: v => v + '%' }, grid: { color: '#1e293b' } }, y: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { color: '#1e293b' } } }
+        }
+    });
+
+    // Avg Deal Value
+    destroyChart('consAvgDeal');
+    charts.consAvgDeal = new Chart(makeCtx('chartConsAvgDeal'), {
+        type: 'bar',
+        data: { labels: consNames, datasets: [{ label: '건당 평균 매출', data: consAvgDeal, backgroundColor: COLORS.value + 'cc', borderRadius: 4 }] },
+        options: { ...cloneDefaults(), responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+            plugins: { ...chartDefaults.plugins, legend: { display: false } },
+            scales: { x: { beginAtZero: true, ticks: { color: '#64748b', callback: v => fmtWon(v) }, grid: { color: '#1e293b' } }, y: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { color: '#1e293b' } } }
+        }
+    });
+
+    // Total Value
     destroyChart('consValue');
     charts.consValue = new Chart(makeCtx('chartConsValue'), {
         type: 'bar',
+        data: { labels: consNames, datasets: [{ label: '총 매출', data: consValue, backgroundColor: consColors, borderRadius: 4 }] },
+        options: { ...cloneDefaults(), responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+            plugins: { ...chartDefaults.plugins, legend: { display: false } },
+            scales: { x: { beginAtZero: true, ticks: { color: '#64748b', callback: v => fmtWon(v) }, grid: { color: '#1e293b' } }, y: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { color: '#1e293b' } } }
+        }
+    });
+}
+
+function renderChannelROI(rows) {
+    // Channel ROI: grouped bar - conversion rate (%) + avg deal value
+    const chMap = {};
+    rows.forEach(r => {
+        const ch = r.channel || '(미분류)';
+        if (!chMap[ch]) chMap[ch] = { inq: 0, conv: 0, value: 0 };
+        chMap[ch].inq++;
+        if (r.isConverted) { chMap[ch].conv++; chMap[ch].value += r.convValue; }
+    });
+    // Sort by inq, filter min 5 leads
+    const chNames = Object.keys(chMap).filter(c => chMap[c].inq >= 5).sort((a, b) => chMap[b].inq - chMap[a].inq);
+    const chRates = chNames.map(c => chMap[c].inq > 0 ? +(chMap[c].conv / chMap[c].inq * 100).toFixed(1) : 0);
+    const chAvgDeal = chNames.map(c => chMap[c].conv > 0 ? Math.round(chMap[c].value / chMap[c].conv) : 0);
+
+    destroyChart('channelROI');
+    charts.channelROI = new Chart(makeCtx('chartChannelROI'), {
+        type: 'bar',
         data: {
-            labels: consNames,
-            datasets: [{ label: '전환가치', data: consValue, backgroundColor: consColors, borderRadius: 4 }]
+            labels: chNames,
+            datasets: [
+                { label: '전환율 (%)', data: chRates, backgroundColor: COLORS.conv + 'cc', borderRadius: 4, yAxisID: 'yRate' },
+                { label: '건당 매출 (만원)', data: chAvgDeal.map(v => Math.round(v / 10000)), backgroundColor: COLORS.value + 'cc', borderRadius: 4, yAxisID: 'yValue' }
+            ]
         },
         options: {
             ...cloneDefaults(), responsive: true, maintainAspectRatio: false, indexAxis: 'y',
-            plugins: { ...chartDefaults.plugins, legend: { display: false } },
+            plugins: { ...chartDefaults.plugins },
             scales: {
-                x: { beginAtZero: true, ticks: { color: '#64748b', callback: v => '₩' + (v/10000).toFixed(0) + '만' }, grid: { color: '#1e293b' } },
-                y: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { color: '#1e293b' } }
+                yRate: { display: false },
+                yValue: { display: false },
+                x: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: '#1e293b' } },
+                y: { ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { color: '#1e293b' } }
             }
         }
     });
 }
 
-/* ─── Table ─── */
+function renderFirstCallCharts(rows) {
+    // ── 첫콜 상태별 전환율 ──
+    const fcMap = {};
+    rows.forEach(r => {
+        const cat = r.firstCallCategory;
+        if (!fcMap[cat]) fcMap[cat] = { total: 0, conv: 0 };
+        fcMap[cat].total++;
+        if (r.isConverted) fcMap[cat].conv++;
+    });
+    const fcOrder = ['첫콜 성공', '1차 부재', '2차 부재', '3차 부재', '기타 부재', '미시도', '기타'];
+    const fcNames = fcOrder.filter(c => fcMap[c]);
+    const fcTotals = fcNames.map(c => fcMap[c].total);
+    const fcRates = fcNames.map(c => fcMap[c].total > 0 ? +(fcMap[c].conv / fcMap[c].total * 100).toFixed(1) : 0);
+    const fcBarColors = fcNames.map(c => c === '첫콜 성공' ? '#4ade80cc' : '#f87171cc');
+
+    destroyChart('firstCall');
+    charts.firstCall = new Chart(makeCtx('chartFirstCall'), {
+        type: 'bar',
+        data: {
+            labels: fcNames.map((c, i) => `${c} (${fmtNum(fcTotals[i])}건)`),
+            datasets: [{ label: '전환율 (%)', data: fcRates, backgroundColor: fcBarColors, borderRadius: 4 }]
+        },
+        options: {
+            ...cloneDefaults(), responsive: true, maintainAspectRatio: false,
+            plugins: {
+                ...chartDefaults.plugins, legend: { display: false },
+                tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => `전환율: ${ctx.raw}%` } }
+            },
+            scales: {
+                x: { ticks: { color: '#e2e8f0', font: { size: 10 } }, grid: { color: '#1e293b' } },
+                y: { beginAtZero: true, ticks: { color: '#64748b', callback: v => v + '%' }, grid: { color: '#1e293b' } }
+            }
+        }
+    });
+
+    // ── 응답속도별 전환율 ──
+    const speedBuckets = [
+        { label: '당일', min: 0, max: 0 },
+        { label: '1일', min: 1, max: 1 },
+        { label: '2~3일', min: 2, max: 3 },
+        { label: '4~7일', min: 4, max: 7 },
+        { label: '8일+', min: 8, max: 9999 }
+    ];
+    const speedData = speedBuckets.map(b => {
+        const matched = rows.filter(r => r.responseDays !== null && r.responseDays >= b.min && r.responseDays <= b.max);
+        const conv = matched.filter(r => r.isConverted).length;
+        return { label: b.label, total: matched.length, conv, rate: matched.length > 0 ? +(conv / matched.length * 100).toFixed(1) : 0 };
+    });
+
+    destroyChart('responseSpeed');
+    charts.responseSpeed = new Chart(makeCtx('chartResponseSpeed'), {
+        type: 'bar',
+        data: {
+            labels: speedData.map(d => `${d.label} (${fmtNum(d.total)}건)`),
+            datasets: [{ label: '전환율 (%)', data: speedData.map(d => d.rate),
+                backgroundColor: speedData.map((d, i) => i === 0 ? '#4ade80cc' : i <= 1 ? '#fbbf24cc' : '#f87171cc'),
+                borderRadius: 4
+            }]
+        },
+        options: {
+            ...cloneDefaults(), responsive: true, maintainAspectRatio: false,
+            plugins: {
+                ...chartDefaults.plugins, legend: { display: false },
+                tooltip: { ...chartDefaults.plugins.tooltip, callbacks: { label: ctx => `전환율: ${ctx.raw}%` } }
+            },
+            scales: {
+                x: { ticks: { color: '#e2e8f0', font: { size: 10 } }, grid: { color: '#1e293b' } },
+                y: { beginAtZero: true, ticks: { color: '#64748b', callback: v => v + '%' }, grid: { color: '#1e293b' } }
+            }
+        }
+    });
+
+    // ── 미전환 리콜 현황 ──
+    const recallCategories = ['1차 부재', '2차 부재', '3차 부재', '기타 부재', '미시도'];
+    const recallData = recallCategories.filter(c => fcMap[c]).map(c => ({
+        label: c,
+        total: fcMap[c].total,
+        conv: fcMap[c].conv,
+        notConv: fcMap[c].total - fcMap[c].conv,
+        rate: fcMap[c].total > 0 ? +(fcMap[c].conv / fcMap[c].total * 100).toFixed(1) : 0
+    }));
+
+    destroyChart('recallStatus');
+    charts.recallStatus = new Chart(makeCtx('chartRecallStatus'), {
+        type: 'bar',
+        data: {
+            labels: recallData.map(d => `${d.label} (${d.total}건)`),
+            datasets: [
+                { label: '전환', data: recallData.map(d => d.conv), backgroundColor: '#4ade80cc', borderRadius: 4 },
+                { label: '미전환', data: recallData.map(d => d.notConv), backgroundColor: '#f8717166', borderRadius: 4 }
+            ]
+        },
+        options: {
+            ...cloneDefaults(), responsive: true, maintainAspectRatio: false,
+            plugins: {
+                ...chartDefaults.plugins,
+                tooltip: { ...chartDefaults.plugins.tooltip, callbacks: {
+                    afterBody: (ctx) => { const i = ctx[0].dataIndex; return `전환율: ${recallData[i].rate}%`; }
+                }}
+            },
+            scales: {
+                x: { stacked: true, ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { color: '#1e293b' } },
+                y: { stacked: true, beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: '#1e293b' } }
+            }
+        }
+    });
+}
+
+/* ─── Daily Table ─── */
 function renderTable(rows) {
     const dailyMap = {};
     rows.forEach(r => {
         const key = r.dt.toDateString();
-        if (!dailyMap[key]) dailyMap[key] = { date: r.dt, inq: 0, conv: 0, value: 0 };
+        if (!dailyMap[key]) dailyMap[key] = { date: r.dt, inq: 0, conv: 0, value: 0, fc: 0, sameDay: 0 };
         dailyMap[key].inq++;
         if (r.isConverted) { dailyMap[key].conv++; dailyMap[key].value += r.convValue; }
+        if (r.firstCallOK) dailyMap[key].fc++;
+        if (r.responseDays === 0) dailyMap[key].sameDay++;
     });
     const sorted = Object.values(dailyMap).sort((a, b) => b.date - a.date);
     document.getElementById('tableBody').innerHTML = sorted.map(d => {
         const rate = d.inq > 0 ? (d.conv / d.inq * 100).toFixed(1) + '%' : '-';
+        const fcRate = d.inq > 0 ? (d.fc / d.inq * 100).toFixed(0) + '%' : '-';
+        const sdRate = d.inq > 0 ? (d.sameDay / d.inq * 100).toFixed(0) + '%' : '-';
         return `<tr>
             <td>${fmtDate(d.date)}</td>
             <td>${fmtNum(d.inq)}</td>
             <td>${fmtNum(d.conv)}</td>
             <td>${rate}</td>
             <td>${fmtWon(d.value)}</td>
+            <td>${fcRate}</td>
+            <td>${sdRate}</td>
+        </tr>`;
+    }).join('');
+}
+
+/* ─── Consultant Detail Table ─── */
+function renderConsTable(rows) {
+    const consMap = {};
+    rows.forEach(r => {
+        const c = r.consultant || '(미배정)';
+        if (!consMap[c]) consMap[c] = { inq: 0, conv: 0, value: 0, fc: 0, sameDay: 0 };
+        consMap[c].inq++;
+        if (r.isConverted) { consMap[c].conv++; consMap[c].value += r.convValue; }
+        if (r.firstCallOK) consMap[c].fc++;
+        if (r.responseDays === 0) consMap[c].sameDay++;
+    });
+    const consNames = [
+        ...ACTIVE_CONSULTANTS.filter(c => consMap[c]),
+        ...Object.keys(consMap).filter(c => !ACTIVE_CONSULTANTS.includes(c)).sort((a, b) => consMap[b].inq - consMap[a].inq)
+    ];
+    const maxValue = Math.max(...consNames.map(c => consMap[c].value));
+
+    document.getElementById('consTableBody').innerHTML = consNames.map(c => {
+        const d = consMap[c];
+        const rate = d.inq > 0 ? (d.conv / d.inq * 100).toFixed(1) + '%' : '-';
+        const avgDeal = d.conv > 0 ? fmtWon(Math.round(d.value / d.conv)) : '-';
+        const fcRate = d.inq > 0 ? (d.fc / d.inq * 100).toFixed(1) + '%' : '-';
+        const sdRate = d.inq > 0 ? (d.sameDay / d.inq * 100).toFixed(1) + '%' : '-';
+        const barW = maxValue > 0 ? Math.round(d.value / maxValue * 60) : 0;
+        const isActive = ACTIVE_CONSULTANTS.includes(c);
+        return `<tr style="${isActive ? 'font-weight:600' : 'opacity:.7'}">
+            <td>${c}${isActive ? '' : ' <span style="color:#64748b;font-size:.7rem">(비활성)</span>'}</td>
+            <td>${fmtNum(d.inq)}</td>
+            <td>${fmtNum(d.conv)}</td>
+            <td>${rate}</td>
+            <td>${fmtWon(d.value)} <span class="cell-bar" style="width:${barW}px;background:${COLORS.value}"></span></td>
+            <td>${avgDeal}</td>
+            <td>${fcRate}</td>
+            <td>${sdRate}</td>
         </tr>`;
     }).join('');
 }
