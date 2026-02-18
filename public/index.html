@@ -176,6 +176,9 @@ function parseNum(v) {
     if (s === '' || s === '-') return 0;
     return parseInt(s, 10) || 0;
 }
+let _parseYear = 2025;
+let _prevMonth = 0;
+function resetDateParser() { _parseYear = 2025; _prevMonth = 0; }
 function parseDate(dateStr) {
     if (!dateStr) return null;
     const m = String(dateStr).match(/(\d{2})\.(\d{2})/);
@@ -183,7 +186,10 @@ function parseDate(dateStr) {
     const month = parseInt(m[1], 10);
     const day = parseInt(m[2], 10);
     if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-    return new Date(2025, month - 1, day);
+    // Detect year rollover: if month drops significantly (e.g. Dec→Jan)
+    if (_prevMonth >= 10 && month <= 2) _parseYear++;
+    _prevMonth = month;
+    return new Date(_parseYear, month - 1, day);
 }
 function extractDayName(dateStr) {
     if (!dateStr) return '';
@@ -200,7 +206,8 @@ function fmtNum(n) {
 function fmtDate(d) {
     const mm = String(d.getMonth()+1).padStart(2,'0');
     const dd = String(d.getDate()).padStart(2,'0');
-    return `${mm}.${dd}`;
+    const yr = d.getFullYear();
+    return yr === 2025 ? `${mm}.${dd}` : `${yr}.${mm}.${dd}`;
 }
 
 /* ─── Data Fetch ─── */
@@ -226,6 +233,7 @@ async function fetchData() {
 
         // Data rows start after the header row
         const dataStartIdx = headerIdx + 1;
+        resetDateParser();
         allRows = [];
         for (let i = dataStartIdx; i < rows.length; i++) {
             const row = rows[i];
