@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>M2 컨설팅 전환콜 대시보드</title>
+<title>M2 실시간 컨설팅 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <style>
@@ -63,12 +63,6 @@ tbody td:first-child{color:#e2e8f0;font-weight:500}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-overlay p{margin-top:1rem;color:#94a3b8;font-size:.9rem}
 .error-banner{background:#7f1d1d;color:#fca5a5;border:1px solid #991b1b;border-radius:.5rem;padding:.75rem 1rem;margin-bottom:1rem;font-size:.85rem;display:none}
-/* Tab styles */
-.tab-btn{background:transparent;color:#94a3b8;border:none;border-radius:8px;padding:.55rem 1.2rem;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .15s}
-.tab-btn:hover{color:#e2e8f0;background:#334155}
-.tab-btn.active{background:#38bdf8;color:#0f172a}
-.tab-pane{display:none}
-.tab-pane.active{display:block}
 
 @media(max-width:900px){
     .chart-grid{grid-template-columns:1fr}
@@ -86,7 +80,7 @@ tbody td:first-child{color:#e2e8f0;font-weight:500}
 </div>
 
 <header class="header">
-    <h1><span>M2</span> 컨설팅 대시보드</h1>
+    <h1><span>M2</span> 실시간 컨설팅 대시보드</h1>
     <div class="controls">
         <label for="periodSelect">기간:</label>
         <select id="periodSelect">
@@ -98,7 +92,7 @@ tbody td:first-child{color:#e2e8f0;font-weight:500}
             <option value="180">180일</option>
             <option value="365">365일</option>
         </select>
-        <button onclick="refreshData()">새로고침</button>
+        <button onclick="fetchData()">새로고침</button>
         <span><span class="status-dot loading" id="statusDot"></span><span class="status-text" id="statusText">대기 중</span></span>
     </div>
 </header>
@@ -106,35 +100,23 @@ tbody td:first-child{color:#e2e8f0;font-weight:500}
 <div class="container">
     <div class="error-banner" id="errorBanner"></div>
 
-    <!-- Tab Bar -->
-    <div style="display:flex;gap:4px;margin-bottom:1.5rem;background:#1e293b;border-radius:10px;padding:4px;width:fit-content">
-        <button class="tab-btn active" data-tab="tabGauge" onclick="switchTab(this)">M2 계기판</button>
-        <button class="tab-btn" data-tab="tabCRM" onclick="switchTab(this)">실시간 컨설팅</button>
-    </div>
-
-    <!-- ===== TAB 1: M2 계기판 ===== -->
-    <div class="tab-pane active" id="tabGauge">
-
     <!-- KPI Cards -->
     <div class="kpi-grid">
-        <div class="kpi-card blue"><div class="icon">📞</div><div class="label">총 콜 수</div><div class="value" id="kpiCalls">-</div><div class="sub" id="kpiCallsSub"></div></div>
-        <div class="kpi-card green"><div class="icon">✅</div><div class="label">총 전환 수</div><div class="value" id="kpiConv">-</div><div class="sub" id="kpiConvSub"></div></div>
+        <div class="kpi-card blue"><div class="icon">📋</div><div class="label">총 문의 수</div><div class="value" id="kpiInq">-</div><div class="sub" id="kpiInqSub"></div></div>
+        <div class="kpi-card green"><div class="icon">✅</div><div class="label">전환 수</div><div class="value" id="kpiConv">-</div><div class="sub" id="kpiConvSub"></div></div>
         <div class="kpi-card amber"><div class="icon">📊</div><div class="label">전환율</div><div class="value" id="kpiRate">-</div><div class="sub" id="kpiRateSub"></div></div>
         <div class="kpi-card pink"><div class="icon">💰</div><div class="label">총 전환가치</div><div class="value" id="kpiValue">-</div><div class="sub" id="kpiValueSub"></div></div>
-        <div class="kpi-card purple"><div class="icon">🏢</div><div class="label">M2 매출 합계</div><div class="value" id="kpiRevenue">-</div><div class="sub" id="kpiRevenueSub"></div></div>
-        <div class="kpi-card cyan"><div class="icon">📈</div><div class="label">일 평균 콜</div><div class="value" id="kpiAvgCalls">-</div><div class="sub" id="kpiAvgCallsSub"></div></div>
+        <div class="kpi-card cyan"><div class="icon">📈</div><div class="label">일평균 문의</div><div class="value" id="kpiAvg">-</div><div class="sub" id="kpiAvgSub"></div></div>
     </div>
 
     <!-- Charts -->
     <div class="chart-grid">
-        <div class="chart-box full"><h3>일별 콜 & 전환 추이</h3><canvas id="chartDailyCallConv"></canvas></div>
-        <div class="chart-box"><h3>일별 전환율 추이</h3><canvas id="chartDailyRate"></canvas></div>
-        <div class="chart-box"><h3>누적 전환가치 & M2 매출</h3><canvas id="chartCumulative"></canvas></div>
-        <div class="chart-box full"><h3>컨설턴트별 성과 비교 (콜 / 전환)</h3><canvas id="chartConsultantPerf"></canvas></div>
-        <div class="chart-box"><h3>컨설턴트별 전환율</h3><canvas id="chartConsultantRate"></canvas></div>
-        <div class="chart-box"><h3>컨설턴트별 전환가치</h3><canvas id="chartConsultantValue"></canvas></div>
-        <div class="chart-box"><h3>요일별 콜 & 전환 분포</h3><canvas id="chartDayOfWeek"></canvas></div>
-        <div class="chart-box"><h3>주간 추이</h3><canvas id="chartWeekly"></canvas></div>
+        <div class="chart-box full"><h3>일별 문의 & 전환 추이</h3><canvas id="chartDaily"></canvas></div>
+        <div class="chart-box"><h3>상담사별 성과 (문의 / 전환)</h3><canvas id="chartConsPerf"></canvas></div>
+        <div class="chart-box"><h3>상담사별 전환율</h3><canvas id="chartConsRate"></canvas></div>
+        <div class="chart-box"><h3>브랜드별 문의 & 전환</h3><canvas id="chartBrand"></canvas></div>
+        <div class="chart-box"><h3>유입경로별 분포</h3><canvas id="chartChannel"></canvas></div>
+        <div class="chart-box full"><h3>상담사별 전환가치</h3><canvas id="chartConsValue"></canvas></div>
     </div>
 
     <!-- Table -->
@@ -142,70 +124,22 @@ tbody td:first-child{color:#e2e8f0;font-weight:500}
         <h3>일별 상세 데이터</h3>
         <div class="table-wrap">
             <table>
-                <thead><tr><th>날짜</th><th>요일</th><th>신규</th><th>콜</th><th>전환</th><th>전환율</th><th>전환가치</th><th>M2 매출</th></tr></thead>
+                <thead><tr><th>날짜</th><th>문의수</th><th>전환수</th><th>전환율</th><th>전환가치</th></tr></thead>
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
     </div>
-    </div><!-- /tabGauge -->
-
-    <!-- ===== TAB 2: 실시간 컨설팅 ===== -->
-    <div class="tab-pane" id="tabCRM">
-
-    <!-- CRM KPI Cards -->
-    <div class="kpi-grid">
-        <div class="kpi-card blue"><div class="icon">📋</div><div class="label">총 문의 수</div><div class="value" id="crmKpiInq">-</div><div class="sub" id="crmKpiInqSub"></div></div>
-        <div class="kpi-card green"><div class="icon">✅</div><div class="label">전환 수</div><div class="value" id="crmKpiConv">-</div><div class="sub" id="crmKpiConvSub"></div></div>
-        <div class="kpi-card amber"><div class="icon">📊</div><div class="label">전환율</div><div class="value" id="crmKpiRate">-</div><div class="sub" id="crmKpiRateSub"></div></div>
-        <div class="kpi-card pink"><div class="icon">💰</div><div class="label">총 전환가치</div><div class="value" id="crmKpiValue">-</div><div class="sub" id="crmKpiValueSub"></div></div>
-        <div class="kpi-card cyan"><div class="icon">📈</div><div class="label">일평균 문의</div><div class="value" id="crmKpiAvg">-</div><div class="sub" id="crmKpiAvgSub"></div></div>
-    </div>
-
-    <!-- CRM Charts -->
-    <div class="chart-grid">
-        <div class="chart-box full"><h3>일별 문의 & 전환 추이</h3><canvas id="crmChartDaily"></canvas></div>
-        <div class="chart-box"><h3>상담사별 성과 (문의 / 전환)</h3><canvas id="crmChartConsPerf"></canvas></div>
-        <div class="chart-box"><h3>상담사별 전환율</h3><canvas id="crmChartConsRate"></canvas></div>
-        <div class="chart-box"><h3>브랜드별 문의 & 전환</h3><canvas id="crmChartBrand"></canvas></div>
-        <div class="chart-box"><h3>유입경로별 분포</h3><canvas id="crmChartChannel"></canvas></div>
-        <div class="chart-box full"><h3>상담사별 전환가치</h3><canvas id="crmChartConsValue"></canvas></div>
-    </div>
-
-    <!-- CRM Table -->
-    <div class="table-section">
-        <h3>일별 상세 데이터</h3>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>날짜</th><th>문의수</th><th>전환수</th><th>전환율</th><th>전환가치</th></tr></thead>
-                <tbody id="crmTableBody"></tbody>
-            </table>
-        </div>
-    </div>
-
-    </div><!-- /tabCRM -->
-
 </div>
 
 <script>
 /* ─── Config ─── */
-const GID = '1133198386';
-const CONSULTANTS = [
-    { name: '황상현', offset: 11 },
-    { name: '판승빈', offset: 18 },
-    { name: '최해인', offset: 25 },
-    { name: '이호성', offset: 32 },
-    { name: '송민주', offset: 39 },
-    { name: '한영훈', offset: 46 },
-    { name: '안소은', offset: 53 },
-];
+const GID = '2096386829';
+const ACTIVE_CONSULTANTS = ['판승빈', '최해인', '강혜윤'];
 const COLORS = {
-    calls: '#38bdf8',
+    inq: '#38bdf8',
     conv: '#4ade80',
-    revenue: '#fbbf24',
-    m2: '#a78bfa',
-    consultants: ['#38bdf8','#4ade80','#a78bfa','#fbbf24','#fb7185','#22d3ee','#f472b6']
+    channels: ['#38bdf8', '#4ade80', '#a78bfa', '#fbbf24', '#fb7185', '#22d3ee', '#f472b6', '#34d399']
 };
-const DAY_NAMES = ['일','월','화','수','목','금','토'];
 
 let allRows = [];
 let charts = {};
@@ -216,38 +150,6 @@ function parseWon(v) {
     const s = v.replace(/[₩\s,]/g, '');
     if (s === '' || s === '-') return 0;
     return parseInt(s, 10) || 0;
-}
-function parsePct(v) {
-    if (!v || typeof v !== 'string') return 0;
-    const s = v.replace(/[%\s]/g, '');
-    if (s === '' || s === '-') return 0;
-    return parseFloat(s) || 0;
-}
-function parseNum(v) {
-    if (v === null || v === undefined) return 0;
-    const s = String(v).replace(/[,\s]/g, '');
-    if (s === '' || s === '-') return 0;
-    return parseInt(s, 10) || 0;
-}
-let _parseYear = 2025;
-let _prevMonth = 0;
-function resetDateParser() { _parseYear = 2025; _prevMonth = 0; }
-function parseDate(dateStr) {
-    if (!dateStr) return null;
-    const m = String(dateStr).match(/(\d{2})\.(\d{2})/);
-    if (!m) return null;
-    const month = parseInt(m[1], 10);
-    const day = parseInt(m[2], 10);
-    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-    // Detect year rollover: if month drops significantly (e.g. Dec→Jan)
-    if (_prevMonth >= 10 && month <= 2) _parseYear++;
-    _prevMonth = month;
-    return new Date(_parseYear, month - 1, day);
-}
-function extractDayName(dateStr) {
-    if (!dateStr) return '';
-    const m = String(dateStr).match(/\((.)\)/);
-    return m ? m[1] : '';
 }
 function fmtWon(n) {
     if (n === 0) return '₩ 0';
@@ -263,84 +165,26 @@ function fmtDate(d) {
     return yr === 2025 ? `${mm}.${dd}` : `${yr}.${mm}.${dd}`;
 }
 
-/* ─── Data Fetch ─── */
-async function fetchData() {
-    setStatus('loading', '데이터 로딩 중...');
-    try {
-        const resp = await fetch(`/api/sheet?gid=${GID}&_t=${Date.now()}`);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const csvText = await resp.text();
-        const parsed = Papa.parse(csvText, { skipEmptyLines: false });
-        const rows = parsed.data;
-
-        // Find header row (the row that contains "신규" and "콜")
-        let headerIdx = -1;
-        for (let i = 0; i < Math.min(rows.length, 10); i++) {
-            const rowStr = rows[i].join(',');
-            if (rowStr.includes('신규') && rowStr.includes('콜')) {
-                headerIdx = i;
-                break;
-            }
-        }
-        if (headerIdx === -1) headerIdx = 2; // fallback: assume 3 header rows (0,1,2)
-
-        // Data rows start after the header row
-        const dataStartIdx = headerIdx + 1;
-        resetDateParser();
-        allRows = [];
-        for (let i = dataStartIdx; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row || row.length < 5) continue;
-            const dateStr = (row[0] || '').trim();
-            const dt = parseDate(dateStr);
-            if (!dt) continue;
-
-            const entry = {
-                dateStr: dateStr,
-                date: dt,
-                dayName: extractDayName(dateStr),
-                sinGyu: parseNum(row[1]),
-                calls: parseNum(row[2]),
-                conv: parseNum(row[3]),
-                convValue: parseWon(row[4]),
-                convRate: parsePct(row[5]),
-                m2Revenue: parseWon(row[9]),
-                consultants: {}
-            };
-
-            CONSULTANTS.forEach(c => {
-                entry.consultants[c.name] = {
-                    calls: parseNum(row[c.offset]),
-                    noContact: parseNum(row[c.offset + 1]),
-                    conv: parseNum(row[c.offset + 2]),
-                    convValue: parseWon(row[c.offset + 3]),
-                    convRate: parsePct(row[c.offset + 4]),
-                    oldConv: parseNum(row[c.offset + 5]),
-                    oldConvValue: parseWon(row[c.offset + 6]),
-                };
-            });
-
-            allRows.push(entry);
-        }
-
-        // Sort by date ascending
-        allRows.sort((a, b) => a.date - b.date);
-
-        setStatus('ok', `${allRows.length}일 데이터 로드 완료`);
-        hideError();
-        render();
-    } catch (err) {
-        setStatus('err', '로드 실패: ' + err.message);
-        showError('데이터 로드 실패: ' + err.message);
-    }
+/* ─── Date Parser with year rollover ─── */
+let _parseYear = 2025;
+let _prevMonth = 0;
+function resetDateParser() { _parseYear = 2025; _prevMonth = 0; }
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    const m = String(dateStr).match(/(\d{1,2})\.(\d{1,2})/);
+    if (!m) return null;
+    const month = parseInt(m[1], 10);
+    const day = parseInt(m[2], 10);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    if (_prevMonth >= 10 && month <= 2) _parseYear++;
+    _prevMonth = month;
+    return new Date(_parseYear, month - 1, day);
 }
 
 /* ─── Status ─── */
 function setStatus(type, text) {
-    const dot = document.getElementById('statusDot');
-    const txt = document.getElementById('statusText');
-    dot.className = 'status-dot ' + type;
-    txt.textContent = text;
+    document.getElementById('statusDot').className = 'status-dot ' + type;
+    document.getElementById('statusText').textContent = text;
 }
 function showError(msg) {
     const el = document.getElementById('errorBanner');
@@ -351,15 +195,86 @@ function hideError() {
     document.getElementById('errorBanner').style.display = 'none';
 }
 
+/* ─── Fetch & Parse ─── */
+async function fetchData() {
+    setStatus('loading', '데이터 로딩 중...');
+    try {
+        const resp = await fetch(`/api/sheet?gid=${GID}&_t=${Date.now()}`);
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const csvText = await resp.text();
+        const parsed = Papa.parse(csvText, { skipEmptyLines: false });
+        const rows = parsed.data;
+
+        // Find header row
+        let headerIdx = -1;
+        for (let i = 0; i < Math.min(rows.length, 10); i++) {
+            const rowStr = rows[i].join(',');
+            if (rowStr.includes('브랜드') || rowStr.includes('학생')) {
+                headerIdx = i;
+                break;
+            }
+        }
+        if (headerIdx === -1) headerIdx = 0;
+
+        const dataStartIdx = headerIdx + 1;
+        resetDateParser();
+        const rawEntries = [];
+
+        for (let i = dataStartIdx; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length < 10) continue;
+
+            const id = (row[0] || '').trim();
+            const brand = (row[1] || '').trim();
+            const dateStr = (row[3] || '').trim();
+            const channel = (row[5] || '').trim();
+            const studentName = (row[8] || '').trim();
+            const consultant = (row[16] || '').trim();
+            const payment = (row[19] || '').trim();
+            const convValueStr = (row[21] || '').trim();
+
+            if (!id && !brand && !studentName) continue;
+
+            const dt = parseDate(dateStr);
+            const isConverted = payment.toUpperCase() === 'O';
+            const convValue = parseWon(convValueStr);
+
+            rawEntries.push({ id, brand, dateStr, dt, channel, studentName, consultant, isConverted, convValue });
+        }
+
+        // Fill missing dates from surrounding rows
+        for (let i = 0; i < rawEntries.length; i++) {
+            if (rawEntries[i].dt) continue;
+            let prevDate = null;
+            for (let j = i - 1; j >= 0; j--) {
+                if (rawEntries[j].dt) { prevDate = rawEntries[j].dt; break; }
+            }
+            let nextDate = null;
+            for (let j = i + 1; j < rawEntries.length; j++) {
+                if (rawEntries[j].dt) { nextDate = rawEntries[j].dt; break; }
+            }
+            rawEntries[i].dt = prevDate || nextDate;
+        }
+
+        allRows = rawEntries.filter(e => e.dt !== null);
+
+        setStatus('ok', `${allRows.length}건 로드 완료`);
+        hideError();
+        render();
+    } catch (err) {
+        setStatus('err', '로드 실패: ' + err.message);
+        showError('데이터 로드 실패: ' + err.message);
+    }
+}
+
 /* ─── Filtering ─── */
 function getFilteredRows() {
     const days = parseInt(document.getElementById('periodSelect').value);
-    if (days === 0) return allRows;
-    const cutoff = new Date(2025, 0, 1);
-    const now = allRows.length > 0 ? allRows[allRows.length - 1].date : new Date(2025, 7, 25);
-    const from = new Date(now);
+    if (days === 0 || allRows.length === 0) return allRows;
+    const maxDate = allRows.reduce((mx, r) => r.dt > mx ? r.dt : mx, allRows[0].dt);
+    const from = new Date(maxDate);
     from.setDate(from.getDate() - days + 1);
-    return allRows.filter(r => r.date >= from && r.date <= now);
+    return allRows.filter(r => r.dt >= from && r.dt <= maxDate);
 }
 
 /* ─── Render All ─── */
@@ -373,25 +288,24 @@ function render() {
 
 /* ─── KPIs ─── */
 function renderKPIs(rows) {
-    const totalCalls = rows.reduce((s, r) => s + r.calls, 0);
-    const totalConv = rows.reduce((s, r) => s + r.conv, 0);
+    const total = rows.length;
+    const converted = rows.filter(r => r.isConverted).length;
+    const rate = total > 0 ? (converted / total * 100) : 0;
     const totalValue = rows.reduce((s, r) => s + r.convValue, 0);
-    const totalM2 = rows.reduce((s, r) => s + r.m2Revenue, 0);
-    const rate = totalCalls > 0 ? (totalConv / totalCalls * 100) : 0;
-    const avgCalls = rows.length > 0 ? (totalCalls / rows.length) : 0;
+    const dateSet = new Set(rows.map(r => r.dt.toDateString()));
+    const numDays = dateSet.size || 1;
+    const avgInq = total / numDays;
 
-    document.getElementById('kpiCalls').textContent = fmtNum(totalCalls);
-    document.getElementById('kpiCallsSub').textContent = `${rows.length}일간 총 콜`;
-    document.getElementById('kpiConv').textContent = fmtNum(totalConv);
-    document.getElementById('kpiConvSub').textContent = `전체 전환 건수`;
+    document.getElementById('kpiInq').textContent = fmtNum(total);
+    document.getElementById('kpiInqSub').textContent = `${numDays}일간 총 문의`;
+    document.getElementById('kpiConv').textContent = fmtNum(converted);
+    document.getElementById('kpiConvSub').textContent = `결제 완료 건수`;
     document.getElementById('kpiRate').textContent = rate.toFixed(1) + '%';
-    document.getElementById('kpiRateSub').textContent = `콜 대비 전환`;
+    document.getElementById('kpiRateSub').textContent = `문의 대비 전환`;
     document.getElementById('kpiValue').textContent = fmtWon(totalValue);
     document.getElementById('kpiValueSub').textContent = `전환 총 가치`;
-    document.getElementById('kpiRevenue').textContent = fmtWon(totalM2);
-    document.getElementById('kpiRevenueSub').textContent = `M2 매출 합계`;
-    document.getElementById('kpiAvgCalls').textContent = avgCalls.toFixed(1);
-    document.getElementById('kpiAvgCallsSub').textContent = `일 평균`;
+    document.getElementById('kpiAvg').textContent = avgInq.toFixed(1);
+    document.getElementById('kpiAvgSub').textContent = `일 평균 문의`;
 }
 
 /* ─── Chart Helpers ─── */
@@ -401,13 +315,8 @@ const chartDefaults = {
     plugins: {
         legend: { labels: { color: '#94a3b8', font: { size: 11 } } },
         tooltip: {
-            backgroundColor: '#1e293b',
-            titleColor: '#f1f5f9',
-            bodyColor: '#e2e8f0',
-            borderColor: '#334155',
-            borderWidth: 1,
-            padding: 10,
-            cornerRadius: 8
+            backgroundColor: '#1e293b', titleColor: '#f1f5f9', bodyColor: '#e2e8f0',
+            borderColor: '#334155', borderWidth: 1, padding: 10, cornerRadius: 8
         }
     },
     scales: {
@@ -415,433 +324,12 @@ const chartDefaults = {
         y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e293b' }, beginAtZero: true }
     }
 };
-
-function makeCtx(id) {
-    return document.getElementById(id).getContext('2d');
-}
-
-function destroyChart(key) {
-    if (charts[key]) { charts[key].destroy(); charts[key] = null; }
-}
-
-function cloneDefaults(overrides) {
-    return JSON.parse(JSON.stringify(chartDefaults));
-}
+function makeCtx(id) { return document.getElementById(id).getContext('2d'); }
+function destroyChart(key) { if (charts[key]) { charts[key].destroy(); charts[key] = null; } }
+function cloneDefaults() { return JSON.parse(JSON.stringify(chartDefaults)); }
 
 /* ─── Render Charts ─── */
 function renderCharts(rows) {
-    const labels = rows.map(r => fmtDate(r.date));
-
-    // 1) Daily calls & conversions (full width bar)
-    destroyChart('dailyCallConv');
-    charts.dailyCallConv = new Chart(makeCtx('chartDailyCallConv'), {
-        type: 'bar',
-        data: {
-            labels,
-            datasets: [
-                { label: '콜', data: rows.map(r => r.calls), backgroundColor: COLORS.calls + 'cc', borderRadius: 3 },
-                { label: '전환', data: rows.map(r => r.conv), backgroundColor: COLORS.conv + 'cc', borderRadius: 3 }
-            ]
-        },
-        options: {
-            ...cloneDefaults(),
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { ...chartDefaults.plugins },
-            scales: {
-                x: { stacked: false, ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45 }, grid: { color: '#1e293b' } },
-                y: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: '#1e293b' } }
-            }
-        }
-    });
-
-    // 2) Daily conversion rate (line)
-    destroyChart('dailyRate');
-    charts.dailyRate = new Chart(makeCtx('chartDailyRate'), {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [{
-                label: '전환율 (%)',
-                data: rows.map(r => r.calls > 0 ? +(r.conv / r.calls * 100).toFixed(1) : 0),
-                borderColor: COLORS.conv,
-                backgroundColor: COLORS.conv + '22',
-                fill: true,
-                tension: 0.3,
-                pointRadius: rows.length > 60 ? 0 : 2
-            }]
-        },
-        options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
-            plugins: { ...chartDefaults.plugins },
-            scales: {
-                x: { ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45 }, grid: { color: '#1e293b' } },
-                y: { beginAtZero: true, ticks: { color: '#64748b', callback: v => v + '%' }, grid: { color: '#1e293b' } }
-            }
-        }
-    });
-
-    // 3) Cumulative conversion value & M2 revenue (dual line)
-    destroyChart('cumulative');
-    let cumVal = 0, cumM2 = 0;
-    const cumValArr = rows.map(r => { cumVal += r.convValue; return cumVal; });
-    const cumM2Arr = rows.map(r => { cumM2 += r.m2Revenue; return cumM2; });
-    charts.cumulative = new Chart(makeCtx('chartCumulative'), {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [
-                { label: '누적 전환가치', data: cumValArr, borderColor: COLORS.revenue, backgroundColor: COLORS.revenue + '18', fill: true, tension: 0.3, pointRadius: 0 },
-                { label: '누적 M2 매출', data: cumM2Arr, borderColor: COLORS.m2, backgroundColor: COLORS.m2 + '18', fill: true, tension: 0.3, pointRadius: 0 }
-            ]
-        },
-        options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
-            plugins: { ...chartDefaults.plugins },
-            scales: {
-                x: { ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45 }, grid: { color: '#1e293b' } },
-                y: { beginAtZero: true, ticks: { color: '#64748b', callback: v => '₩' + (v/10000).toFixed(0) + '만' }, grid: { color: '#1e293b' } }
-            }
-        }
-    });
-
-    // 4) Consultant performance comparison (horizontal grouped bar: calls + conv)
-    destroyChart('consultantPerf');
-    const cNames = CONSULTANTS.map(c => c.name);
-    const cCalls = CONSULTANTS.map(c => rows.reduce((s, r) => s + (r.consultants[c.name]?.calls || 0), 0));
-    const cConv = CONSULTANTS.map(c => rows.reduce((s, r) => s + (r.consultants[c.name]?.conv || 0), 0));
-    charts.consultantPerf = new Chart(makeCtx('chartConsultantPerf'), {
-        type: 'bar',
-        data: {
-            labels: cNames,
-            datasets: [
-                { label: '콜', data: cCalls, backgroundColor: COLORS.calls + 'cc', borderRadius: 4 },
-                { label: '전환', data: cConv, backgroundColor: COLORS.conv + 'cc', borderRadius: 4 }
-            ]
-        },
-        options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
-            indexAxis: 'y',
-            plugins: { ...chartDefaults.plugins },
-            scales: {
-                x: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: '#1e293b' } },
-                y: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { color: '#1e293b' } }
-            }
-        }
-    });
-
-    // 5) Consultant conversion rate (horizontal bar)
-    destroyChart('consultantRate');
-    const cRates = CONSULTANTS.map((c, i) => cCalls[i] > 0 ? +(cConv[i] / cCalls[i] * 100).toFixed(1) : 0);
-    charts.consultantRate = new Chart(makeCtx('chartConsultantRate'), {
-        type: 'bar',
-        data: {
-            labels: cNames,
-            datasets: [{ label: '전환율 (%)', data: cRates, backgroundColor: COLORS.consultants.map(c => c + 'cc'), borderRadius: 4 }]
-        },
-        options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
-            indexAxis: 'y',
-            plugins: { ...chartDefaults.plugins, legend: { display: false } },
-            scales: {
-                x: { beginAtZero: true, ticks: { color: '#64748b', callback: v => v + '%' }, grid: { color: '#1e293b' } },
-                y: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { color: '#1e293b' } }
-            }
-        }
-    });
-
-    // 6) Consultant conversion value (horizontal bar)
-    destroyChart('consultantValue');
-    const cValues = CONSULTANTS.map(c => rows.reduce((s, r) => s + (r.consultants[c.name]?.convValue || 0), 0));
-    charts.consultantValue = new Chart(makeCtx('chartConsultantValue'), {
-        type: 'bar',
-        data: {
-            labels: cNames,
-            datasets: [{ label: '전환가치', data: cValues, backgroundColor: COLORS.consultants.map(c => c + 'cc'), borderRadius: 4 }]
-        },
-        options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
-            indexAxis: 'y',
-            plugins: { ...chartDefaults.plugins, legend: { display: false } },
-            scales: {
-                x: { beginAtZero: true, ticks: { color: '#64748b', callback: v => '₩' + (v/10000).toFixed(0) + '만' }, grid: { color: '#1e293b' } },
-                y: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { color: '#1e293b' } }
-            }
-        }
-    });
-
-    // 7) Day-of-week distribution (bar chart 일~토)
-    destroyChart('dayOfWeek');
-    const dowCalls = new Array(7).fill(0);
-    const dowConv = new Array(7).fill(0);
-    const dayMap = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };
-    rows.forEach(r => {
-        const di = dayMap[r.dayName];
-        if (di !== undefined) {
-            dowCalls[di] += r.calls;
-            dowConv[di] += r.conv;
-        }
-    });
-    charts.dayOfWeek = new Chart(makeCtx('chartDayOfWeek'), {
-        type: 'bar',
-        data: {
-            labels: DAY_NAMES,
-            datasets: [
-                { label: '콜', data: dowCalls, backgroundColor: COLORS.calls + 'cc', borderRadius: 4 },
-                { label: '전환', data: dowConv, backgroundColor: COLORS.conv + 'cc', borderRadius: 4 }
-            ]
-        },
-        options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
-            plugins: { ...chartDefaults.plugins },
-            scales: {
-                x: { ticks: { color: '#e2e8f0', font: { size: 12 } }, grid: { color: '#1e293b' } },
-                y: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: '#1e293b' } }
-            }
-        }
-    });
-
-    // 8) Weekly trend (bar chart)
-    destroyChart('weekly');
-    const weekMap = {};
-    rows.forEach(r => {
-        const d = r.date;
-        const dayOfWeek = d.getDay();
-        const mondayOffset = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
-        const monday = new Date(d);
-        monday.setDate(d.getDate() + mondayOffset);
-        const key = fmtDate(monday);
-        if (!weekMap[key]) weekMap[key] = { calls: 0, conv: 0 };
-        weekMap[key].calls += r.calls;
-        weekMap[key].conv += r.conv;
-    });
-    const weekKeys = Object.keys(weekMap).sort();
-    charts.weekly = new Chart(makeCtx('chartWeekly'), {
-        type: 'bar',
-        data: {
-            labels: weekKeys.map(k => k + '~'),
-            datasets: [
-                { label: '콜', data: weekKeys.map(k => weekMap[k].calls), backgroundColor: COLORS.calls + 'cc', borderRadius: 4 },
-                { label: '전환', data: weekKeys.map(k => weekMap[k].conv), backgroundColor: COLORS.conv + 'cc', borderRadius: 4 }
-            ]
-        },
-        options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
-            plugins: { ...chartDefaults.plugins },
-            scales: {
-                x: { ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45 }, grid: { color: '#1e293b' } },
-                y: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: '#1e293b' } }
-            }
-        }
-    });
-}
-
-/* ─── Table ─── */
-function renderTable(rows) {
-    const tbody = document.getElementById('tableBody');
-    // Most recent first
-    const sorted = [...rows].reverse();
-    tbody.innerHTML = sorted.map(r => {
-        const rate = r.calls > 0 ? (r.conv / r.calls * 100).toFixed(1) + '%' : '-';
-        return `<tr>
-            <td>${fmtDate(r.date)}</td>
-            <td>${r.dayName}</td>
-            <td>${fmtNum(r.sinGyu)}</td>
-            <td>${fmtNum(r.calls)}</td>
-            <td>${fmtNum(r.conv)}</td>
-            <td>${rate}</td>
-            <td>${fmtWon(r.convValue)}</td>
-            <td>${fmtWon(r.m2Revenue)}</td>
-        </tr>`;
-    }).join('');
-}
-
-/* ═══════════════════════════════════════════════════════
-   TAB SWITCHING
-   ═══════════════════════════════════════════════════════ */
-function switchTab(btn) {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.tab).classList.add('active');
-    // Lazy load CRM data on first switch
-    if (btn.dataset.tab === 'tabCRM' && crmAllRows.length === 0 && !crmLoading) {
-        fetchCRMData();
-    }
-}
-
-/* ═══════════════════════════════════════════════════════
-   CRM TAB: (실시간) 컨설팅
-   ═══════════════════════════════════════════════════════ */
-const CRM_GID = '2096386829';
-const CRM_CONSULTANTS = ['판승빈', '최해인', '강혜윤'];
-const CRM_COLORS = {
-    inq: '#38bdf8',
-    conv: '#4ade80',
-    brands: ['#38bdf8', '#a78bfa', '#fbbf24', '#fb7185', '#22d3ee'],
-    consultants: ['#38bdf8', '#4ade80', '#fbbf24'],
-    channels: ['#38bdf8', '#4ade80', '#a78bfa', '#fbbf24', '#fb7185', '#22d3ee', '#f472b6', '#34d399']
-};
-
-let crmAllRows = [];
-let crmCharts = {};
-let crmLoading = false;
-
-/* ─── CRM Date Parser (separate state) ─── */
-let _crmParseYear = 2025;
-let _crmPrevMonth = 0;
-function resetCRMDateParser() { _crmParseYear = 2025; _crmPrevMonth = 0; }
-function parseCRMDate(dateStr) {
-    if (!dateStr) return null;
-    const m = String(dateStr).match(/(\d{1,2})\.(\d{1,2})/);
-    if (!m) return null;
-    const month = parseInt(m[1], 10);
-    const day = parseInt(m[2], 10);
-    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-    if (_crmPrevMonth >= 10 && month <= 2) _crmParseYear++;
-    _crmPrevMonth = month;
-    return new Date(_crmParseYear, month - 1, day);
-}
-
-/* ─── CRM Fetch & Parse ─── */
-async function fetchCRMData() {
-    crmLoading = true;
-    setStatus('loading', 'CRM 데이터 로딩 중...');
-    try {
-        const resp = await fetch(`/api/sheet?gid=${CRM_GID}&_t=${Date.now()}`);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const csvText = await resp.text();
-        const parsed = Papa.parse(csvText, { skipEmptyLines: false });
-        const rows = parsed.data;
-
-        // Find header row containing '학생' or '브랜드'
-        let headerIdx = -1;
-        for (let i = 0; i < Math.min(rows.length, 10); i++) {
-            const rowStr = rows[i].join(',');
-            if (rowStr.includes('브랜드') || rowStr.includes('학생')) {
-                headerIdx = i;
-                break;
-            }
-        }
-        if (headerIdx === -1) headerIdx = 0;
-
-        const dataStartIdx = headerIdx + 1;
-        resetCRMDateParser();
-        const rawEntries = [];
-
-        // First pass: parse all rows, collect dates
-        for (let i = dataStartIdx; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row || row.length < 10) continue;
-
-            const id = (row[0] || '').trim();
-            const brand = (row[1] || '').trim();
-            const product = (row[2] || '').trim();
-            const dateStr = (row[3] || '').trim();
-            const channel = (row[5] || '').trim();
-            const studentName = (row[8] || '').trim();
-            const consultant = (row[16] || '').trim();
-            const firstCall = (row[17] || '').trim();
-            const payment = (row[19] || '').trim();
-            const convValueStr = (row[21] || '').trim();
-
-            // Skip completely empty rows
-            if (!id && !brand && !studentName) continue;
-
-            const dt = parseCRMDate(dateStr);
-            const isConverted = payment.toUpperCase() === 'O';
-            const convValue = parseWon(convValueStr);
-
-            rawEntries.push({
-                id, brand, product, dateStr, dt,
-                channel, studentName, consultant, firstCall,
-                isConverted, convValue
-            });
-        }
-
-        // Second pass: fill missing dates from surrounding rows
-        for (let i = 0; i < rawEntries.length; i++) {
-            if (rawEntries[i].dt) continue;
-            // Look backward for nearest date
-            let prevDate = null;
-            for (let j = i - 1; j >= 0; j--) {
-                if (rawEntries[j].dt) { prevDate = rawEntries[j].dt; break; }
-            }
-            // Look forward for nearest date
-            let nextDate = null;
-            for (let j = i + 1; j < rawEntries.length; j++) {
-                if (rawEntries[j].dt) { nextDate = rawEntries[j].dt; break; }
-            }
-            // Use prev date preferentially (since data is chronological top to bottom)
-            rawEntries[i].dt = prevDate || nextDate;
-        }
-
-        // Filter out entries with no date at all
-        crmAllRows = rawEntries.filter(e => e.dt !== null);
-
-        setStatus('ok', `CRM ${crmAllRows.length}건 로드 완료`);
-        hideError();
-        renderCRM();
-    } catch (err) {
-        setStatus('err', 'CRM 로드 실패: ' + err.message);
-        showError('CRM 데이터 로드 실패: ' + err.message);
-    }
-    crmLoading = false;
-}
-
-/* ─── CRM Filtering ─── */
-function getCRMFilteredRows() {
-    const days = parseInt(document.getElementById('periodSelect').value);
-    if (days === 0 || crmAllRows.length === 0) return crmAllRows;
-    const maxDate = crmAllRows.reduce((mx, r) => r.dt > mx ? r.dt : mx, crmAllRows[0].dt);
-    const from = new Date(maxDate);
-    from.setDate(from.getDate() - days + 1);
-    return crmAllRows.filter(r => r.dt >= from && r.dt <= maxDate);
-}
-
-/* ─── CRM Render ─── */
-function renderCRM() {
-    const rows = getCRMFilteredRows();
-    renderCRMKPIs(rows);
-    renderCRMCharts(rows);
-    renderCRMTable(rows);
-}
-
-function renderCRMKPIs(rows) {
-    const total = rows.length;
-    const converted = rows.filter(r => r.isConverted).length;
-    const rate = total > 0 ? (converted / total * 100) : 0;
-    const totalValue = rows.reduce((s, r) => s + r.convValue, 0);
-
-    // Count unique dates
-    const dateSet = new Set(rows.map(r => r.dt.toDateString()));
-    const numDays = dateSet.size || 1;
-    const avgInq = total / numDays;
-
-    document.getElementById('crmKpiInq').textContent = fmtNum(total);
-    document.getElementById('crmKpiInqSub').textContent = `${numDays}일간 총 문의`;
-    document.getElementById('crmKpiConv').textContent = fmtNum(converted);
-    document.getElementById('crmKpiConvSub').textContent = `결제 완료 건수`;
-    document.getElementById('crmKpiRate').textContent = rate.toFixed(1) + '%';
-    document.getElementById('crmKpiRateSub').textContent = `문의 대비 전환`;
-    document.getElementById('crmKpiValue').textContent = fmtWon(totalValue);
-    document.getElementById('crmKpiValueSub').textContent = `전환 총 가치`;
-    document.getElementById('crmKpiAvg').textContent = avgInq.toFixed(1);
-    document.getElementById('crmKpiAvgSub').textContent = `일 평균 문의`;
-}
-
-function destroyCRMChart(key) {
-    if (crmCharts[key]) { crmCharts[key].destroy(); crmCharts[key] = null; }
-}
-
-function renderCRMCharts(rows) {
     // Aggregate by date
     const dailyMap = {};
     rows.forEach(r => {
@@ -851,24 +339,20 @@ function renderCRMCharts(rows) {
         if (r.isConverted) { dailyMap[key].conv++; dailyMap[key].value += r.convValue; }
     });
     const dailyKeys = Object.keys(dailyMap).sort((a, b) => dailyMap[a].date - dailyMap[b].date);
-    const dailyLabels = dailyKeys;
-    const dailyInq = dailyKeys.map(k => dailyMap[k].inq);
-    const dailyConv = dailyKeys.map(k => dailyMap[k].conv);
 
     // 1) Daily inquiry & conversion
-    destroyCRMChart('daily');
-    crmCharts.daily = new Chart(makeCtx('crmChartDaily'), {
+    destroyChart('daily');
+    charts.daily = new Chart(makeCtx('chartDaily'), {
         type: 'bar',
         data: {
-            labels: dailyLabels,
+            labels: dailyKeys,
             datasets: [
-                { label: '문의', data: dailyInq, backgroundColor: CRM_COLORS.inq + 'cc', borderRadius: 3 },
-                { label: '전환', data: dailyConv, backgroundColor: CRM_COLORS.conv + 'cc', borderRadius: 3 }
+                { label: '문의', data: dailyKeys.map(k => dailyMap[k].inq), backgroundColor: COLORS.inq + 'cc', borderRadius: 3 },
+                { label: '전환', data: dailyKeys.map(k => dailyMap[k].conv), backgroundColor: COLORS.conv + 'cc', borderRadius: 3 }
             ]
         },
         options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
+            ...cloneDefaults(), responsive: true, maintainAspectRatio: false,
             plugins: { ...chartDefaults.plugins },
             scales: {
                 x: { ticks: { color: '#64748b', font: { size: 10 }, maxRotation: 45 }, grid: { color: '#1e293b' } },
@@ -885,31 +369,28 @@ function renderCRMCharts(rows) {
         consMap[c].inq++;
         if (r.isConverted) { consMap[c].conv++; consMap[c].value += r.convValue; }
     });
-    // Sort: show CRM_CONSULTANTS first, then others sorted by inq desc
     const consNames = [
-        ...CRM_CONSULTANTS.filter(c => consMap[c]),
-        ...Object.keys(consMap).filter(c => !CRM_CONSULTANTS.includes(c)).sort((a, b) => consMap[b].inq - consMap[a].inq)
+        ...ACTIVE_CONSULTANTS.filter(c => consMap[c]),
+        ...Object.keys(consMap).filter(c => !ACTIVE_CONSULTANTS.includes(c)).sort((a, b) => consMap[b].inq - consMap[a].inq)
     ];
     const consInq = consNames.map(c => consMap[c].inq);
     const consConv = consNames.map(c => consMap[c].conv);
     const consValue = consNames.map(c => consMap[c].value);
-    const consColors = consNames.map((_, i) => (CRM_COLORS.channels[i % CRM_COLORS.channels.length]) + 'cc');
+    const consColors = consNames.map((_, i) => COLORS.channels[i % COLORS.channels.length] + 'cc');
 
     // 2) Consultant performance
-    destroyCRMChart('consPerf');
-    crmCharts.consPerf = new Chart(makeCtx('crmChartConsPerf'), {
+    destroyChart('consPerf');
+    charts.consPerf = new Chart(makeCtx('chartConsPerf'), {
         type: 'bar',
         data: {
             labels: consNames,
             datasets: [
-                { label: '문의', data: consInq, backgroundColor: CRM_COLORS.inq + 'cc', borderRadius: 4 },
-                { label: '전환', data: consConv, backgroundColor: CRM_COLORS.conv + 'cc', borderRadius: 4 }
+                { label: '문의', data: consInq, backgroundColor: COLORS.inq + 'cc', borderRadius: 4 },
+                { label: '전환', data: consConv, backgroundColor: COLORS.conv + 'cc', borderRadius: 4 }
             ]
         },
         options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
-            indexAxis: 'y',
+            ...cloneDefaults(), responsive: true, maintainAspectRatio: false, indexAxis: 'y',
             plugins: { ...chartDefaults.plugins },
             scales: {
                 x: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: '#1e293b' } },
@@ -919,18 +400,16 @@ function renderCRMCharts(rows) {
     });
 
     // 3) Consultant conversion rate
-    destroyCRMChart('consRate');
-    const consRates = consNames.map((c, i) => consInq[i] > 0 ? +(consConv[i] / consInq[i] * 100).toFixed(1) : 0);
-    crmCharts.consRate = new Chart(makeCtx('crmChartConsRate'), {
+    destroyChart('consRate');
+    const consRates = consNames.map((_, i) => consInq[i] > 0 ? +(consConv[i] / consInq[i] * 100).toFixed(1) : 0);
+    charts.consRate = new Chart(makeCtx('chartConsRate'), {
         type: 'bar',
         data: {
             labels: consNames,
             datasets: [{ label: '전환율 (%)', data: consRates, backgroundColor: consColors, borderRadius: 4 }]
         },
         options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
-            indexAxis: 'y',
+            ...cloneDefaults(), responsive: true, maintainAspectRatio: false, indexAxis: 'y',
             plugins: { ...chartDefaults.plugins, legend: { display: false } },
             scales: {
                 x: { beginAtZero: true, ticks: { color: '#64748b', callback: v => v + '%' }, grid: { color: '#1e293b' } },
@@ -950,19 +429,18 @@ function renderCRMCharts(rows) {
     const brandNames = Object.keys(brandMap).sort((a, b) => brandMap[b].inq - brandMap[a].inq);
 
     // 4) Brand breakdown
-    destroyCRMChart('brand');
-    crmCharts.brand = new Chart(makeCtx('crmChartBrand'), {
+    destroyChart('brand');
+    charts.brand = new Chart(makeCtx('chartBrand'), {
         type: 'bar',
         data: {
             labels: brandNames,
             datasets: [
-                { label: '문의', data: brandNames.map(b => brandMap[b].inq), backgroundColor: CRM_COLORS.inq + 'cc', borderRadius: 4 },
-                { label: '전환', data: brandNames.map(b => brandMap[b].conv), backgroundColor: CRM_COLORS.conv + 'cc', borderRadius: 4 }
+                { label: '문의', data: brandNames.map(b => brandMap[b].inq), backgroundColor: COLORS.inq + 'cc', borderRadius: 4 },
+                { label: '전환', data: brandNames.map(b => brandMap[b].conv), backgroundColor: COLORS.conv + 'cc', borderRadius: 4 }
             ]
         },
         options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
+            ...cloneDefaults(), responsive: true, maintainAspectRatio: false,
             plugins: { ...chartDefaults.plugins },
             scales: {
                 x: { ticks: { color: '#e2e8f0', font: { size: 11 } }, grid: { color: '#1e293b' } },
@@ -981,22 +459,20 @@ function renderCRMCharts(rows) {
     const chanNames = Object.keys(chanMap).sort((a, b) => chanMap[b] - chanMap[a]);
 
     // 5) Channel distribution
-    destroyCRMChart('channel');
-    crmCharts.channel = new Chart(makeCtx('crmChartChannel'), {
+    destroyChart('channel');
+    charts.channel = new Chart(makeCtx('chartChannel'), {
         type: 'bar',
         data: {
             labels: chanNames,
             datasets: [{
                 label: '문의수',
                 data: chanNames.map(c => chanMap[c]),
-                backgroundColor: chanNames.map((_, i) => CRM_COLORS.channels[i % CRM_COLORS.channels.length] + 'cc'),
+                backgroundColor: chanNames.map((_, i) => COLORS.channels[i % COLORS.channels.length] + 'cc'),
                 borderRadius: 4
             }]
         },
         options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
-            indexAxis: 'y',
+            ...cloneDefaults(), responsive: true, maintainAspectRatio: false, indexAxis: 'y',
             plugins: { ...chartDefaults.plugins, legend: { display: false } },
             scales: {
                 x: { beginAtZero: true, ticks: { color: '#64748b' }, grid: { color: '#1e293b' } },
@@ -1006,17 +482,15 @@ function renderCRMCharts(rows) {
     });
 
     // 6) Consultant conversion value
-    destroyCRMChart('consValue');
-    crmCharts.consValue = new Chart(makeCtx('crmChartConsValue'), {
+    destroyChart('consValue');
+    charts.consValue = new Chart(makeCtx('chartConsValue'), {
         type: 'bar',
         data: {
             labels: consNames,
             datasets: [{ label: '전환가치', data: consValue, backgroundColor: consColors, borderRadius: 4 }]
         },
         options: {
-            ...cloneDefaults(),
-            responsive: true, maintainAspectRatio: false,
-            indexAxis: 'y',
+            ...cloneDefaults(), responsive: true, maintainAspectRatio: false, indexAxis: 'y',
             plugins: { ...chartDefaults.plugins, legend: { display: false } },
             scales: {
                 x: { beginAtZero: true, ticks: { color: '#64748b', callback: v => '₩' + (v/10000).toFixed(0) + '만' }, grid: { color: '#1e293b' } },
@@ -1026,8 +500,8 @@ function renderCRMCharts(rows) {
     });
 }
 
-function renderCRMTable(rows) {
-    // Aggregate by date
+/* ─── Table ─── */
+function renderTable(rows) {
     const dailyMap = {};
     rows.forEach(r => {
         const key = r.dt.toDateString();
@@ -1036,8 +510,7 @@ function renderCRMTable(rows) {
         if (r.isConverted) { dailyMap[key].conv++; dailyMap[key].value += r.convValue; }
     });
     const sorted = Object.values(dailyMap).sort((a, b) => b.date - a.date);
-    const tbody = document.getElementById('crmTableBody');
-    tbody.innerHTML = sorted.map(d => {
+    document.getElementById('tableBody').innerHTML = sorted.map(d => {
         const rate = d.inq > 0 ? (d.conv / d.inq * 100).toFixed(1) + '%' : '-';
         return `<tr>
             <td>${fmtDate(d.date)}</td>
@@ -1049,22 +522,10 @@ function renderCRMTable(rows) {
     }).join('');
 }
 
-/* ─── Period change should also re-render CRM if loaded ─── */
-document.getElementById('periodSelect').addEventListener('change', () => {
-    if (crmAllRows.length > 0) renderCRM();
-});
-
-function refreshData() {
-    fetchData();
-    if (crmAllRows.length > 0) fetchCRMData();
-}
-
-/* ─── Init ─── */
+/* ─── Events & Init ─── */
+document.getElementById('periodSelect').addEventListener('change', render);
 fetchData();
-setInterval(() => {
-    fetchData();
-    if (crmAllRows.length > 0) fetchCRMData();
-}, 5 * 60 * 1000);
+setInterval(fetchData, 5 * 60 * 1000);
 </script>
 </body>
 </html>
