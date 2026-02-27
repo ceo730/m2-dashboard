@@ -314,6 +314,8 @@ async function fetchData() {
             if (!id && !brand && !studentName) continue;
 
             const dt = parseDate(dateStr);
+            // Skip rows with no parseable date (empty placeholders, header/template rows)
+            if (!dt) continue;
             const isConverted = payment.toUpperCase() === 'O';
             const convValue = parseWon(convValueStr);
             const firstCallOK = firstCallStatus === 'O';
@@ -334,14 +336,7 @@ async function fetchData() {
             });
         }
 
-        // Fill missing dates
-        for (let i = 0; i < rawEntries.length; i++) {
-            if (rawEntries[i].dt) continue;
-            let prev = null, next = null;
-            for (let j = i - 1; j >= 0; j--) { if (rawEntries[j].dt) { prev = rawEntries[j].dt; break; } }
-            for (let j = i + 1; j < rawEntries.length; j++) { if (rawEntries[j].dt) { next = rawEntries[j].dt; break; } }
-            rawEntries[i].dt = prev || next;
-        }
+        // (Fill-missing-dates removed: unreliable on unsorted data, inflated counts with empty placeholder rows)
 
         allRows = rawEntries.filter(e => e.dt !== null);
 
