@@ -203,22 +203,50 @@ function fmtDate(d) {
     const mm = String(d.getMonth()+1).padStart(2,'0');
     const dd = String(d.getDate()).padStart(2,'0');
     const yr = d.getFullYear();
-    return yr === 2025 ? `${mm}.${dd}` : `${yr}.${mm}.${dd}`;
+    const shortYr = String(yr).slice(2);
+    return `${shortYr}.${mm}.${dd}`;
 }
 
-/* ─── Date Parser with year rollover ─── */
-let _parseYear, _prevMonth;
-function resetDateParser() { _parseYear = 2025; _prevMonth = 0; }
+/* ─── Date Parser using day-of-week ─── */
+const DAY_MAP = {'일':0,'월':1,'화':2,'수':3,'목':4,'금':5,'토':6};
+const CANDIDATE_YEARS = [2025, 2026, 2024, 2027];
+
 function parseDate(dateStr) {
     if (!dateStr) return null;
-    const m = String(dateStr).match(/(\d{1,2})\.(\d{1,2})/);
+    const s = String(dateStr).trim();
+
+    // Try YYYY.M.D format first
+    const fullMatch = s.match(/(\d{4})[\.\-\/](\d{1,2})[\.\-\/](\d{1,2})/);
+    if (fullMatch) {
+        const yr = parseInt(fullMatch[1], 10);
+        const mo = parseInt(fullMatch[2], 10);
+        const dy = parseInt(fullMatch[3], 10);
+        if (mo >= 1 && mo <= 12 && dy >= 1 && dy <= 31) {
+            return new Date(yr, mo - 1, dy);
+        }
+    }
+
+    // MM.DD format
+    const m = s.match(/(\d{1,2})\.(\d{1,2})/);
     if (!m) return null;
     const month = parseInt(m[1], 10);
     const day = parseInt(m[2], 10);
     if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-    if (_prevMonth >= 10 && month <= 2) _parseYear++;
-    _prevMonth = month;
-    return new Date(_parseYear, month - 1, day);
+
+    // Use day-of-week in parentheses to determine exact year
+    const dowMatch = s.match(/\(([일월화수목금토])\)/);
+    if (dowMatch) {
+        const targetDow = DAY_MAP[dowMatch[1]];
+        for (const yr of CANDIDATE_YEARS) {
+            const d = new Date(yr, month - 1, day);
+            if (d.getMonth() === month - 1 && d.getDate() === day && d.getDay() === targetDow) {
+                return d;
+            }
+        }
+    }
+
+    // Fallback: default 2025
+    return new Date(2025, month - 1, day);
 }
 // Standalone date parse (doesn't affect global state) for response date
 function parseDateStandalone(dateStr, refDate) {
@@ -265,7 +293,6 @@ async function fetchData() {
         }
         if (headerIdx === -1) headerIdx = 0;
 
-        resetDateParser();
         const rawEntries = [];
 
         for (let i = headerIdx + 1; i < rows.length; i++) {
